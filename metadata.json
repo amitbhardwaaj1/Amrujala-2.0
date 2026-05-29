@@ -1,0 +1,6 @@
+{
+  "name": "E-Paper Aggregator",
+  "description": "A elegant and modern unified reader for major Indian newspapers including Amar Ujala, Dainik Jagran, Hindustan Times, Times of India, and Hindustan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
