@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff603d" />
+      <stop offset="100%" stop-color="#ee2b2b" />
+    </linearGradient>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+  </defs>
+  <!-- Background Rounded Rect -->
+  <rect width="512" height="512" rx="128" fill="url(#bg)" />
+  <rect width="496" height="496" x="8" y="8" rx="120" fill="none" stroke="rgba(255, 96, 61, 0.15)" stroke-width="16" />
+  
+  <!-- Stylized folded e-Paper Sheet -->
+  <path d="M128,160 C128,142.3 142.3,128 160,128 L352,128 C369.7,128 384,142.3 384,160 L384,352 C384,369.7 369.7,384 352,384 L160,384 C142.3,384 128,369.7 128,352 Z" fill="#1e293b" />
+  
+  <!-- Glowing header accent representing breaking news -->
+  <path d="M160,128 L352,128 C369.7,128 384,142.3 384,160 L384,192 L128,192 L128,160 C128,142.3 142.3,128 160,128 Z" fill="url(#glow)" />
+  
+  <!-- Simulated columns representing standard newspaper layout -->
+  <!-- Left Column Main Article -->
+  <rect x="160" y="224" width="96" height="12" rx="6" fill="#64748b" />
+  <rect x="160" y="248" width="96" height="8" rx="4" fill="#475569" />
+  <rect x="160" y="264" width="96" height="8" rx="4" fill="#475569" />
+  <rect x="160" y="280" width="80" height="8" rx="4" fill="#475569" />
+  <rect x="160" y="304" width="96" height="48" rx="8" fill="rgba(255, 96, 61, 0.1)" stroke="rgba(255, 96, 61, 0.2)" stroke-width="2" />
+  
+  <!-- Right Column Side Panel -->
+  <rect x="280" y="224" width="72" height="12" rx="6" fill="url(#glow)" />
+  <rect x="280" y="248" width="72" height="8" rx="4" fill="#475569" />
+  <rect x="280" y="264" width="72" height="8" rx="4" fill="#475569" />
+  <rect x="280" y="280" width="72" height="8" rx="4" fill="#475569" />
+  <rect x="280" y="296" width="72" height="8" rx="4" fill="#475569" />
+  <rect x="280" y="312" width="72" height="8" rx="4" fill="#475569" />
+  <rect x="280" y="328" width="56" height="8" rx="4" fill="#475569" />
+
+  <!-- A tiny elegant globe or scanner element to denote digital power -->
+  <circle cx="330" cy="160" r="16" fill="rgba(255, 255, 255, 0.2)" />
+</svg>

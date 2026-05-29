@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useNewspaper } from "@/contexts/NewspaperContext";
+import { useNewspaper } from "@/data/contexts/NewspaperContext";
 import { getOrderedCities, citiesData } from "@/data/cities";
 import { getJagranStates, getJagranCitiesByState } from "@/data/jagranCities";
 import { getTOICities } from "@/data/toiCities";

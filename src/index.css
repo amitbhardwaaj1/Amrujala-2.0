@@ -1,10 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Rozha+One&family=Mukta:wght@600;800&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+  --font-devanagari: "Rozha One", serif;
+  --font-mukta: "Mukta", sans-serif;
   
   --background: 224 71.4% 4.1%; /* Deep Slate Black #0b0f19 equivalent HSL */
   --foreground: 210 20% 98%;
@@ -25,28 +27,21 @@
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     
-    /* Strong anti-blur render overrides */
+    /* Perfect subpixel sharpness */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    transform: translate3d(0, 0, 0);
   }
 
   .glass-card:hover {
     background: rgba(15, 23, 42, 0.75);
     border-color: rgba(var(--primary-rgb), 0.35); /* Shifting brand color border */
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 0 30px 2px rgba(var(--primary-rgb), 0.08); /* Brand glow */
-    transform: translate3d(0, -1px, 0);
   }
 
   .glass-accent-card {
     background-color: rgba(15, 23, 42, 0.82);
     border: 1px solid hsl(var(--primary));
     box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    transform: translate3d(0, 0, 0);
   }
 
   .glass-panel {
@@ -54,9 +49,6 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    transform: translate3d(0, 0, 0);
   }
 
   .glow-primary {
@@ -80,7 +72,7 @@
   }
 }
 
-/* Ensure deep, tidy, solid background across entire window */
+/* Ensure deep, tidy, solid background across entire window with maximum legibility */
 html, body {
   background-color: #050814; /* Deep premium midnight black space */
   color: #f1f5f9;
@@ -89,22 +81,37 @@ html, body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Custom ambient visual container with dynamic responsive colors */
+/* Ensure newspaper images, maps, and text inside iPaper containers are razor sharp and never smoothed or blurred */
+[data-page] img,
+.page-container img,
+.w-full img,
+svg image {
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: crisp-edges !important;
+  image-rendering: -moz-crisp-edges !important;
+  image-rendering: o-crisp-edges !important;
+  image-rendering: pixelated !important;
+  backface-visibility: visible !important;
+  -webkit-backface-visibility: visible !important;
+  transform: none !important;
+}
+
+/* Custom ambient visual container with dynamic responsive colors and optimized low-CPU soft gradients */
 .ambient-glow {
   position: absolute;
   top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 550px;
-  height: 550px;
-  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.15) 0%, transparent 70%);
-  filter: blur(95px);
+  width: 580px;
+  height: 580px;
+  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.09) 0%, rgba(var(--primary-rgb), 0.03) 40%, transparent 70%);
+  filter: blur(40px); /* Lower CPU blur combined with naturally diffuse gradient stops prevents rasterization artifacts */
   pointer-events: none;
   z-index: 0;
-  animation: floatGlow 12s ease-in-out infinite alternate;
-  will-change: transform;
+  animation: floatGlow 14s ease-in-out infinite alternate;
 }
 
 @keyframes floatGlow {
@@ -113,8 +120,8 @@ html, body {
     opacity: 0.7;
   }
   100% {
-    transform: translate(-45%, -52%) scale(1.1);
-    opacity: 0.95;
+    transform: translate(-47%, -51%) scale(1.06);
+    opacity: 0.9;
   }
 }
 
