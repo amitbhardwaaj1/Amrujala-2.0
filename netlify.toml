@@ -1,0 +1,58 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Proxy Amar Ujala api queries to cloudfront
+[[redirects]]
+  from = "/api/download/amar-ujala"
+  to = "https://d1h47qec6ptx2j.cloudfront.net/amarujala/v1/download"
+  status = 200
+  force = true
+
+# Proxy Dainik Jagran api queries to cloudfront
+[[redirects]]
+  from = "/api/download/dainik-jagran"
+  to = "https://d1h47qec6ptx2j.cloudfront.net/dainikjagran/v1/download"
+  status = 200
+  force = true
+
+# Proxy Hindustan Times download queries
+[[redirects]]
+  from = "/api/download/hindustan-times"
+  to = "https://d1h47qec6ptx2j.cloudfront.net/hindustantimes/v1/download"
+  status = 200
+  force = true
+
+# Proxy Times of India download queries
+[[redirects]]
+  from = "/api/download/times-of-india"
+  to = "https://d1h47qec6ptx2j.cloudfront.net/toi/v1/download"
+  status = 200
+  force = true
+
+# Proxy Hindustan HT Supplement hierarchy
+[[redirects]]
+  from = "/api/ht/editions"
+  to = "https://epaper.hindustantimes.com/Home/GetEditionSupplementHierarchy"
+  status = 200
+  force = true
+
+# Proxy Hindustan location list
+[[redirects]]
+  from = "/api/hindustan/locations"
+  to = "https://epaperinhouse.livehindustan.com/be/api/v1/locations"
+  status = 200
+  force = true
+
+# Proxy LiveHindustan directly to allow frontend fallback parsing of NEXT_DATA
+[[redirects]]
+  from = "/api/hindustan-direct/*"
+  to = "https://epaper.livehindustan.com/:splat"
+  status = 200
+  force = true
+
+# Handle client-side routing on Netlify so refresh works on page sub-routes
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

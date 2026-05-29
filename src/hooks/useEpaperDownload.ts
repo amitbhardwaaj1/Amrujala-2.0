@@ -256,12 +256,64 @@ export function useEpaperDownload() {
         } else if (newspaper === "hindustan") {
           // Hindustan - GET, single response with formatted date
           const formattedDate = `${day}/${month}/${year}`;
+          let data: any = null;
 
-          const response = await fetch(
-            `${API_ENDPOINTS["hindustan"]}?editionId=${city}&editionDate=${formattedDate}`,
-            { method: "GET", headers: { "Content-Type": "application/json" } }
-          );
-          const data = await response.json();
+          try {
+            const response = await fetch(
+              `${API_ENDPOINTS["hindustan"]}?editionId=${city}&editionDate=${formattedDate}`,
+              { method: "GET", headers: { "Content-Type": "application/json" } }
+            );
+            
+            if (!response.ok) {
+              throw new Error(`API endpoint returned status ${response.status}`);
+            }
+            data = await response.json();
+            if (!data || !data.data || !data.data.htmlContent) {
+              throw new Error("Missing HTML content payload in API response");
+            }
+          } catch (firstErr) {
+            console.warn("Hindustan Node.js API failed, performing fallback edge CDN scrape:", firstErr);
+            
+            // Generate direct parameters
+            const isoFormattedDate = `${year}-${month}-${day}`;
+            const cleanCitySlug = city.toLowerCase().trim().replace(/\s+/g, "-");
+            
+            // Query the Netlify/CDN direct proxy route
+            const directProxyUrl = `/api/hindustan-direct/edition/${cleanCitySlug}?date=${isoFormattedDate}`;
+            const response = await fetch(directProxyUrl);
+            
+            if (!response.ok) {
+              throw new Error(`Hindustan e-paper not found on official livehindustan page (CORS/Proxy status: ${response.status})`);
+            }
+            
+            const html = await response.text();
+            
+            // Parse NEXT_DATA scripts exactly like the server-side compiler did
+            const nextDataRegex = /<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/gi;
+            const match = nextDataRegex.exec(html);
+            if (!match) {
+              throw new Error("Unable to parse e-paper layouts directly from the livehindustan document.");
+            }
+            
+            const nextJson = JSON.parse(match[1]);
+            const edition = nextJson.props?.pageProps?.edition;
+            if (!edition || !edition.pages || edition.pages.length === 0) {
+              throw new Error("No pages could be found for this regional edition on this date.");
+            }
+            
+            // Map edition pages into elements
+            const constructedHtml = edition.pages
+              .map((p: any) => `<div style="width:100%"><img src="${p.viewerSrc}" referrerPolicy="no-referrer" /></div>`)
+              .join("\n");
+              
+            data = {
+              status: "success",
+              data: {
+                htmlContent: constructedHtml,
+                totalPage: edition.pages.length,
+              }
+            };
+          }
 
           if (data?.data?.htmlContent) {
             const tempDiv = document.createElement("div");
