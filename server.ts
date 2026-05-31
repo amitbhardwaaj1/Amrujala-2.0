@@ -121,7 +121,7 @@ app.get("/api/download/times-of-india", async (req, res) => {
   }
 });
 
-// 5. Hindustan Downloader (GET) - Direct scraping from epaper.livehindustan.com to bypass broken middleman proxy
+// 5. Hindustan Downloader (GET) - Proxy CloudFront endpoint for Hindustan and keep a direct fallback route for older scraping behavior
 app.get("/api/download/hindustan", async (req, res) => {
   try {
     const { editionId, editionDate } = req.query;
@@ -129,15 +129,9 @@ app.get("/api/download/hindustan", async (req, res) => {
       return res.status(400).json({ error: "Missing editionId or editionDate" });
     }
 
-    // Convert editionDate "DD/MM/YYYY" to "YYYY-MM-DD"
-    const [day, month, year] = (editionDate as string).split("/");
-    const formattedDate = `${year}-${month}-${day}`;
-
-    // Target the lowercased city name slug (passed as editionId)
-    const citySlug = (editionId as string).toLowerCase().trim().replace(/\s+/g, "-");
-
-    const targetUrl = `https://epaper.livehindustan.com/edition/${citySlug}?date=${formattedDate}`;
-    console.log(`Scraping Hindustan direct: ${targetUrl}`);
+    const targetUrl = `https://d1h47qec6ptx2j.cloudfront.net/hindustan/v1/download?editionId=${encodeURIComponent(
+      editionId as string
+    )}&editionDate=${encodeURIComponent(editionDate as string)}`;
 
     const response = await fetch(targetUrl, {
       method: "GET",
@@ -145,7 +139,39 @@ app.get("/api/download/hindustan", async (req, res) => {
     });
 
     if (!response.ok) {
-      return res.status(404).json({ error: `Hindustan epaper not found on official page. Server responded with status ${response.status}` });
+      const text = await response.text();
+      return res.status(response.status).json({ error: text || "Failed to download Hindustan" });
+    }
+
+    const data = await response.json();
+    return res.json(data);
+  } catch (error: any) {
+    console.error("Hindustan Proxy Error:", error);
+    return res.status(500).json({ error: error.message || "Internal server error" });
+  }
+});
+
+app.get("/api/hindustan-direct/edition/:citySlug", async (req, res) => {
+  try {
+    const { citySlug } = req.params;
+    const { date } = req.query;
+    if (!citySlug || !date) {
+      return res.status(400).json({ error: "Missing city slug or date" });
+    }
+
+    const targetUrl = `https://epaper.livehindustan.com/edition/${encodeURIComponent(
+      citySlug as string
+    )}?date=${encodeURIComponent(date as string)}`;
+    console.log(`Scraping Hindustan fallback route: ${targetUrl}`);
+
+    const response = await fetch(targetUrl, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      return res.status(response.status).json({ error: text || "Hindustan direct fallback page not found" });
     }
 
     const html = await response.text();
@@ -161,7 +187,6 @@ app.get("/api/download/hindustan", async (req, res) => {
       return res.status(404).json({ error: "No pages listed for this edition on this date on livehindustan." });
     }
 
-    // Map pages into HTML img tags expected by frontend
     const htmlContent = edition.pages
       .map((p: any) => `<div style="width:100%"><img src="${p.viewerSrc}" referrerPolicy="no-referrer" /></div>`)
       .join("\n");
@@ -171,12 +196,11 @@ app.get("/api/download/hindustan", async (req, res) => {
       data: {
         htmlContent,
         totalPage: edition.pages.length,
-      }
+      },
     });
-
   } catch (error: any) {
-    console.error("Hindustan Scraping Proxy Error:", error);
-    return res.status(500).json({ error: error.message || "Internal server error during direct scraping" });
+    console.error("Hindustan Direct Scraping Proxy Error:", error);
+    return res.status(500).json({ error: error.message || "Internal server error during direct fallback scraping" });
   }
 });
 

@@ -38,7 +38,8 @@ interface DownloadFormProps {
     date: string,
     paperType?: string,
     state?: string,
-    subCity?: string
+    subCity?: string,
+    citySlug?: string
   ) => void;
   isLoading: boolean;
 }
@@ -71,6 +72,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
   const [hindustanStates, setHindustanStates] = useState<HindustanState[]>([]);
   const [hindustanState, setHindustanState] = useState("");
   const [hindustanCity, setHindustanCity] = useState("");
+  const [hindustanCitySlug, setHindustanCitySlug] = useState("");
   const [hindustanLoading, setHindustanLoading] = useState(false);
 
   // Common date
@@ -165,8 +167,10 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
           if (normalizedData.length > 0) {
             setHindustanState(String(normalizedData[0].LocationId));
             const firstEd = (normalizedData[0].editionlocation || [])[0]?.edition?.[0];
-            const defaultCity = firstEd?.EditionName || firstEd?.editionName || "delhi";
-            setHindustanCity(String(defaultCity).toLowerCase());
+            const defaultCityId = firstEd?.EditionId ?? "";
+            const defaultCitySlug = firstEd?.EditionName || firstEd?.editionName || "delhi";
+            setHindustanCity(String(defaultCityId));
+            setHindustanCitySlug(String(defaultCitySlug).toLowerCase().trim().replace(/\s+/g, "-"));
           }
         } catch (error) {
           console.error("Failed to fetch Hindustan locations, using robust fallback list:", error);
@@ -244,7 +248,8 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
 
           setHindustanStates(fallbackData);
           setHindustanState(String(fallbackData[0].LocationId));
-          setHindustanCity("delhi");
+          setHindustanCity(String(fallbackData[0].editionlocation[0].edition[0].EditionId));
+          setHindustanCitySlug(String(fallbackData[0].editionlocation[0].edition[0].EditionName || "delhi").toLowerCase().trim().replace(/\s+/g, "-"));
         } finally {
           setHindustanLoading(false);
         }
@@ -271,8 +276,10 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
       const stateData = hindustanStates.find((s) => String(s.LocationId) === hindustanState);
       const editionsList = (stateData?.editionlocation || []).flatMap((el) => el?.edition || []);
       if (editionsList.length > 0) {
-        const defaultEditionName = editionsList[0].EditionName || editionsList[0].editionName || "delhi";
-        setHindustanCity(String(defaultEditionName).toLowerCase());
+        const defaultEditionId = editionsList[0].EditionId ?? "";
+        const defaultEditionSlug = editionsList[0].EditionName || editionsList[0].editionName || "delhi";
+        setHindustanCity(String(defaultEditionId));
+        setHindustanCitySlug(String(defaultEditionSlug).toLowerCase().trim().replace(/\s+/g, "-"));
       }
     }
   }, [hindustanState, hindustanStates]);
@@ -300,7 +307,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
     } else if (currentPaper.id === "times-of-india") {
       onDownload(currentPaper.id, toiCity, date);
     } else if (currentPaper.id === "hindustan") {
-      onDownload(currentPaper.id, hindustanCity, date);
+      onDownload(currentPaper.id, hindustanCity, date, undefined, undefined, undefined, hindustanCitySlug);
     }
   };
 
@@ -492,7 +499,21 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
                 <MapPin className="w-3.5 h-3.5 text-primary" />
                 Select City
               </label>
-              <Select value={hindustanCity} onValueChange={setHindustanCity} disabled={hindustanLoading}>
+              <Select
+                value={hindustanCity}
+                onValueChange={(value) => {
+                  const stateData = hindustanStates.find((s) => String(s.LocationId) === hindustanState);
+                  const editionsList = (stateData?.editionlocation || []).flatMap((el) => el?.edition || []);
+                  const selectedEdition = editionsList.find((edition) => String(edition.EditionId) === value);
+
+                  setHindustanCity(value);
+                  if (selectedEdition) {
+                    const slug = String(selectedEdition.EditionName || selectedEdition.editionName || "").toLowerCase().trim().replace(/\s+/g, "-");
+                    setHindustanCitySlug(slug);
+                  }
+                }}
+                disabled={hindustanLoading}
+              >
                 <SelectTrigger className="w-full h-12 bg-slate-900 border-slate-700 hover:bg-slate-850 text-slate-100 placeholder-slate-400 focus:ring-primary/20 transition-all font-medium rounded-xl border">
                   <SelectValue placeholder={hindustanLoading ? "Loading..." : "Choose city"} />
                 </SelectTrigger>
@@ -502,7 +523,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
                     ?.editionlocation || [])
                     .flatMap((el) => el?.edition || [])
                     .map((edition) => (
-                      <SelectItem key={edition.EditionId} value={String(edition.EditionName || edition.editionName).toLowerCase()} className="text-slate-200 focus:bg-white/10 hover:bg-white/5 focus:text-slate-100 py-2.5 cursor-pointer">
+                      <SelectItem key={edition.EditionId} value={String(edition.EditionId)} className="text-slate-200 focus:bg-white/10 hover:bg-white/5 focus:text-slate-100 py-2.5 cursor-pointer">
                         {edition.EditionDisplayName}
                       </SelectItem>
                     ))}

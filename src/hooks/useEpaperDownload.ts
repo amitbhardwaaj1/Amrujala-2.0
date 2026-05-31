@@ -87,7 +87,8 @@ export function useEpaperDownload() {
       date: string,
       paperType?: string,
       stateId?: string,
-      subCity?: string
+      subCity?: string,
+      citySlug?: string
     ) => {
       setState({ isLoading: true, pages: [], progress: 0, totalPages: 0, city, date, newspaper });
 
@@ -276,43 +277,26 @@ export function useEpaperDownload() {
             
             // Generate direct parameters
             const isoFormattedDate = `${year}-${month}-${day}`;
-            const cleanCitySlug = city.toLowerCase().trim().replace(/\s+/g, "-");
+            const cleanCitySlug = citySlug
+              ? String(citySlug).toLowerCase().trim().replace(/\s+/g, "-")
+              : String(city).toLowerCase().trim().replace(/\s+/g, "-");
             
-            // Query the Netlify/CDN direct proxy route
             const directProxyUrl = `/api/hindustan-direct/edition/${cleanCitySlug}?date=${isoFormattedDate}`;
-            const response = await fetch(directProxyUrl);
+            const response = await fetch(directProxyUrl, {
+              method: "GET",
+              headers: { "Content-Type": "application/json" },
+            });
             
             if (!response.ok) {
               throw new Error(`Hindustan e-paper not found on official livehindustan page (CORS/Proxy status: ${response.status})`);
             }
             
-            const html = await response.text();
-            
-            // Parse NEXT_DATA scripts exactly like the server-side compiler did
-            const nextDataRegex = /<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/gi;
-            const match = nextDataRegex.exec(html);
-            if (!match) {
-              throw new Error("Unable to parse e-paper layouts directly from the livehindustan document.");
+            const fallbackJson = await response.json();
+            if (!fallbackJson || !fallbackJson.data || !fallbackJson.data.htmlContent) {
+              throw new Error("Unable to parse fallback Hindustan html content from proxy response.");
             }
             
-            const nextJson = JSON.parse(match[1]);
-            const edition = nextJson.props?.pageProps?.edition;
-            if (!edition || !edition.pages || edition.pages.length === 0) {
-              throw new Error("No pages could be found for this regional edition on this date.");
-            }
-            
-            // Map edition pages into elements
-            const constructedHtml = edition.pages
-              .map((p: any) => `<div style="width:100%"><img src="${p.viewerSrc}" referrerPolicy="no-referrer" /></div>`)
-              .join("\n");
-              
-            data = {
-              status: "success",
-              data: {
-                htmlContent: constructedHtml,
-                totalPage: edition.pages.length,
-              }
-            };
+            data = fallbackJson;
           }
 
           if (data?.data?.htmlContent) {
@@ -326,8 +310,16 @@ export function useEpaperDownload() {
               });
               totalPage = images.length;
             } else {
-              images.push(data.data.htmlContent);
-              totalPage = 1;
+              const regexUrls = Array.from(data.data.htmlContent.matchAll(/https?:\/\/[^"'\s>]+\.(?:jpe?g|png|webp|gif|avif)/gi)).map((match) => match[0]);
+              if (regexUrls.length > 0) {
+                regexUrls.forEach((src, idx) => {
+                  images.push(`<img src="${src}" alt="Page ${idx + 1}" style="width:100%;" />`);
+                });
+                totalPage = images.length;
+              } else {
+                images.push(data.data.htmlContent);
+                totalPage = 1;
+              }
             }
           } else {
             throw new Error("No data returned from the API.");
