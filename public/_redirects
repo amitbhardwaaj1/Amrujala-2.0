@@ -1,6 +1,7 @@
 /api/download/amar-ujala  https://d1h47qec6ptx2j.cloudfront.net/amarujala/v1/download  200
 /api/download/dainik-jagran  https://d1h47qec6ptx2j.cloudfront.net/dainikjagran/v1/download  200
 /api/download/hindustan-times  https://d1h47qec6ptx2j.cloudfront.net/hindustantimes/v1/download  200
+/api/download/hindustan  https://d1h47qec6ptx2j.cloudfront.net/hindustan/v1/download  200
 /api/download/times-of-india  https://d1h47qec6ptx2j.cloudfront.net/toi/v1/download  200
 /api/ht/editions  https://epaper.hindustantimes.com/Home/GetEditionSupplementHierarchy  200
 /api/hindustan/locations  https://epaperinhouse.livehindustan.com/be/api/v1/locations  200
