@@ -37,6 +37,13 @@
   status = 200
   force = true
 
+# Proxy Hindustan download queries to CloudFront
+[[redirects]]
+  from = "/api/download/hindustan"
+  to = "https://d1h47qec6ptx2j.cloudfront.net/hindustan/v1/download"
+  status = 200
+  force = true
+
 # Proxy Hindustan location list
 [[redirects]]
   from = "/api/hindustan/locations"
