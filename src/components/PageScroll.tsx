@@ -69,58 +69,92 @@ export function PageScroll({ pages, onBack, city, date, newspaper = "amar-ujala"
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
 
+      const extractImageSrc = (html: string) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const images = Array.from(doc.querySelectorAll("img"));
+
+        for (const img of images) {
+          const src = img.getAttribute("src")?.trim();
+          const dataSrc = img.getAttribute("data-src")?.trim();
+          const lazySrc = img.getAttribute("data-lazy-src")?.trim();
+          const original = img.getAttribute("data-original")?.trim();
+          const srcset = img.getAttribute("srcset")?.trim();
+
+          const candidate = src || dataSrc || lazySrc || original;
+          if (candidate) return candidate;
+
+          if (srcset) {
+            const parts = srcset.split(",").map((item) => item.trim().split(" ")[0]);
+            const last = parts[parts.length - 1];
+            if (last) return last;
+          }
+        }
+
+        const fallbackMatch = html.match(/src=["']([^"']+)["']/) || html.match(/data-src=["']([^"']+)["']/);
+        return fallbackMatch?.[1] || "";
+      };
+
       for (let i = 0; i < pages.length; i++) {
         if (i > 0) pdf.addPage();
 
-        // Extract image src from HTML content
-        const imgMatch = pages[i].match(/src=["']([^"']+)["']/);
-        
-        if (imgMatch && imgMatch[1]) {
-          const imgSrc = imgMatch[1];
-          
-          // Load image and add to PDF
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => {
-              const canvas = document.createElement("canvas");
-              canvas.width = img.width;
-              canvas.height = img.height;
-              const ctx = canvas.getContext("2d");
-              
-              if (ctx) {
-                ctx.drawImage(img, 0, 0);
-                const imgData = canvas.toDataURL("image/jpeg", 0.9);
-                
-                // Calculate dimensions to fit page
-                const imgRatio = img.width / img.height;
-                const pageRatio = pageWidth / pageHeight;
-                
-                let finalWidth = pageWidth;
-                let finalHeight = pageHeight;
-                
-                if (imgRatio > pageRatio) {
-                  finalHeight = pageWidth / imgRatio;
-                } else {
-                  finalWidth = pageHeight * imgRatio;
-                }
-                
-                const x = (pageWidth - finalWidth) / 2;
-                const y = (pageHeight - finalHeight) / 2;
-                
-                pdf.addImage(imgData, "JPEG", x, y, finalWidth, finalHeight);
-              }
-              resolve();
-            };
-            img.onerror = () => reject(new Error(`Failed to load image for page ${i + 1}`));
-            img.src = imgSrc;
-          });
+        const imgSrc = extractImageSrc(pages[i]);
+        if (!imgSrc) {
+          pdf.setFontSize(12);
+          pdf.setTextColor(255, 255, 255);
+          pdf.text(`Page ${i + 1} image unavailable`, 20, 30);
+          pdf.setFontSize(9);
+          pdf.setTextColor(100);
+          pdf.text("@amitbhardwaaj1", 10, pageHeight - 10);
+          continue;
         }
+
+        const normalizedSrc = imgSrc.startsWith("//") ? `https:${imgSrc}` : imgSrc;
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            const width = img.naturalWidth || img.width;
+            const height = img.naturalHeight || img.height;
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              const imgData = canvas.toDataURL("image/jpeg", 0.9);
+
+              const imgRatio = width / height;
+              const pageRatio = pageWidth / pageHeight;
+              let finalWidth = pageWidth;
+              let finalHeight = pageHeight;
+
+              if (imgRatio > pageRatio) {
+                finalHeight = pageWidth / imgRatio;
+              } else {
+                finalWidth = pageHeight * imgRatio;
+              }
+
+              const x = (pageWidth - finalWidth) / 2;
+              const y = (pageHeight - finalHeight) / 2;
+
+              pdf.addImage(imgData, "JPEG", x, y, finalWidth, finalHeight);
+            }
+
+            pdf.setFontSize(9);
+            pdf.setTextColor(100);
+            pdf.text("@amitbhardwaaj1", 10, pageHeight - 10);
+            resolve();
+          };
+          img.onerror = () => reject(new Error(`Failed to load image for page ${i + 1}`));
+          img.src = normalizedSrc;
+        });
       }
 
       const paperName = newspapers[newspaper]?.id || "epaper";
-      const fileName = `${paperName}-${city || "edition"}-${date || new Date().toISOString().split("T")[0]}.pdf`;
+      const fileName = `@amitbhardwaaj1-${paperName}-${city || "edition"}-${date || new Date().toISOString().split("T")[0]}.pdf`;
       pdf.save(fileName);
 
       toast({

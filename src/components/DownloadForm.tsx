@@ -27,6 +27,8 @@ interface HindustanState {
     edition: {
       EditionId: number;
       EditionDisplayName: string;
+      EditionName?: string;
+      editionName?: string;
     }[];
   }[];
 }
@@ -562,7 +564,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
           ) : (
             <>
               <Download className="w-5 h-5 mr-2" />
-              Download E-Paper
+              Read E-Paper
             </>
           )}
         </Button>
