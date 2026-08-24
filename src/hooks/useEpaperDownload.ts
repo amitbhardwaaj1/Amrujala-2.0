@@ -5,6 +5,7 @@ import { NewspaperId } from "@/data/newspapers";
 interface DownloadState {
   isLoading: boolean;
   pages: string[];
+  downloadUrl: string;
   progress: number;
   totalPages: number;
   city: string;
@@ -73,6 +74,7 @@ export function useEpaperDownload() {
   const [state, setState] = useState<DownloadState>({
     isLoading: false,
     pages: [],
+    downloadUrl: "",
     progress: 0,
     totalPages: 0,
     city: "",
@@ -90,12 +92,13 @@ export function useEpaperDownload() {
       subCity?: string,
       citySlug?: string
     ) => {
-      setState({ isLoading: true, pages: [], progress: 0, totalPages: 0, city, date, newspaper });
+      setState({ isLoading: true, pages: [], downloadUrl: "", progress: 0, totalPages: 0, city, date, newspaper });
 
       const [year, month, day] = date.split("-");
 
       try {
         let images: string[] = [];
+        let downloadUrl = "";
         let totalPage = 1;
 
         if (newspaper === "amar-ujala") {
@@ -255,82 +258,27 @@ export function useEpaperDownload() {
             images.push(res.htmlContent);
           });
         } else if (newspaper === "hindustan") {
-          // Hindustan - GET, single response with formatted date
+          // Hindustan - GET a signed PDF download URL
           const formattedDate = `${day}/${month}/${year}`;
-          let data: any = null;
-
-          try {
-            const response = await fetch(
-              `${API_ENDPOINTS["hindustan"]}?editionId=${city}&editionDate=${formattedDate}`,
-              { method: "GET", headers: { "Content-Type": "application/json" } }
-            );
-            
-            if (!response.ok) {
-              throw new Error(`API endpoint returned status ${response.status}`);
-            }
-            data = await response.json();
-            if (!data || !data.data || !data.data.htmlContent) {
-              throw new Error("Missing HTML content payload in API response");
-            }
-          } catch (firstErr) {
-            console.warn("Hindustan Node.js API failed, performing fallback edge CDN scrape:", firstErr);
-            
-            // Generate direct parameters
-            const isoFormattedDate = `${year}-${month}-${day}`;
-            const cleanCitySlug = citySlug
-              ? String(citySlug).toLowerCase().trim().replace(/\s+/g, "-")
-              : String(city).toLowerCase().trim().replace(/\s+/g, "-");
-            
-            const directProxyUrl = `/api/hindustan-direct/edition/${cleanCitySlug}?date=${isoFormattedDate}`;
-            const response = await fetch(directProxyUrl, {
-              method: "GET",
-              headers: { "Content-Type": "application/json" },
-            });
-            
-            if (!response.ok) {
-              throw new Error(`Hindustan e-paper not found on official livehindustan page (CORS/Proxy status: ${response.status})`);
-            }
-            
-            const fallbackJson = await response.json();
-            if (!fallbackJson || !fallbackJson.data || !fallbackJson.data.htmlContent) {
-              throw new Error("Unable to parse fallback Hindustan html content from proxy response.");
-            }
-            
-            data = fallbackJson;
+          const response = await fetch(
+            `${API_ENDPOINTS["hindustan"]}?editionId=${encodeURIComponent(city)}&editionDate=${encodeURIComponent(formattedDate)}`,
+            { method: "GET", headers: { "Content-Type": "application/json" } }
+          );
+          if (!response.ok) {
+            throw new Error(`API endpoint returned status ${response.status}`);
           }
-
-          if (data?.data?.htmlContent) {
-            const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = data.data.htmlContent;
-            const pageImages = tempDiv.querySelectorAll("img");
-
-            if (pageImages.length > 0) {
-              pageImages.forEach((img, idx) => {
-                images.push(`<img src="${img.src}" alt="Page ${idx + 1}" style="width:100%;" />`);
-              });
-              totalPage = images.length;
-            } else {
-              const regexUrls = Array.from(data.data.htmlContent.matchAll(/https?:\/\/[^"'\s>]+\.(?:jpe?g|png|webp|gif|avif)/gi)).map((match) => match[0]);
-              if (regexUrls.length > 0) {
-                regexUrls.forEach((src, idx) => {
-                  images.push(`<img src="${src}" alt="Page ${idx + 1}" style="width:100%;" />`);
-                });
-                totalPage = images.length;
-              } else {
-                images.push(data.data.htmlContent);
-                totalPage = 1;
-              }
-            }
-          } else {
-            throw new Error("No data returned from the API.");
+          const data = await response.json();
+          if (!data?.url || typeof data.url !== "string") {
+            throw new Error("No Hindustan download URL returned from the API.");
           }
-          setState((s) => ({ ...s, progress: totalPage, totalPages: totalPage }));
+          downloadUrl = data.url;
+          setState((s) => ({ ...s, downloadUrl, progress: 1, totalPages: 1 }));
         }
 
-        setState({ isLoading: false, pages: images, progress: totalPage, totalPages: totalPage, city, date, newspaper });
+        setState({ isLoading: false, pages: images, downloadUrl, progress: totalPage, totalPages: totalPage, city, date, newspaper });
       } catch (error) {
         console.error("Download error:", error);
-        setState({ isLoading: false, pages: [], progress: 0, totalPages: 0, city: "", date: "", newspaper: "amar-ujala" });
+        setState({ isLoading: false, pages: [], downloadUrl: "", progress: 0, totalPages: 0, city: "", date: "", newspaper: "amar-ujala" });
 
         toast({
           title: "Download Failed",
@@ -343,7 +291,7 @@ export function useEpaperDownload() {
   );
 
   const reset = useCallback(() => {
-    setState({ isLoading: false, pages: [], progress: 0, totalPages: 0, city: "", date: "", newspaper: "amar-ujala" });
+    setState({ isLoading: false, pages: [], downloadUrl: "", progress: 0, totalPages: 0, city: "", date: "", newspaper: "amar-ujala" });
   }, []);
 
   return {

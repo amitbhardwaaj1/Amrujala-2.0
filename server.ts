@@ -121,7 +121,7 @@ app.get("/api/download/times-of-india", async (req, res) => {
   }
 });
 
-// 5. Hindustan Downloader (GET) - Proxy CloudFront endpoint for Hindustan and keep a direct fallback route for older scraping behavior
+// 5. Hindustan Downloader (GET)
 app.get("/api/download/hindustan", async (req, res) => {
   try {
     const { editionId, editionDate } = req.query;
@@ -129,9 +129,9 @@ app.get("/api/download/hindustan", async (req, res) => {
       return res.status(400).json({ error: "Missing editionId or editionDate" });
     }
 
-    const targetUrl = `https://d1h47qec6ptx2j.cloudfront.net/hindustan/v1/download?editionId=${encodeURIComponent(
+    const targetUrl = `https://epaperinhouse.livehindustan.com/be/downloadEditionUrl?editionid=${encodeURIComponent(
       editionId as string
-    )}&editionDate=${encodeURIComponent(editionDate as string)}`;
+    )}&editiondate=${encodeURIComponent(editionDate as string)}`;
 
     const response = await fetch(targetUrl, {
       method: "GET",
@@ -144,7 +144,11 @@ app.get("/api/download/hindustan", async (req, res) => {
     }
 
     const data = await response.json();
-    return res.json(data);
+    if (!data?.url || typeof data.url !== "string") {
+      return res.status(502).json({ error: "Hindustan API returned no download URL" });
+    }
+
+    return res.json({ url: data.url });
   } catch (error: any) {
     console.error("Hindustan Proxy Error:", error);
     return res.status(500).json({ error: error.message || "Internal server error" });

@@ -26,6 +26,7 @@ interface HindustanState {
   editionlocation: {
     edition: {
       EditionId: number;
+      EditionCode?: string;
       EditionDisplayName: string;
       EditionName?: string;
       editionName?: string;
@@ -169,7 +170,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
           if (normalizedData.length > 0) {
             setHindustanState(String(normalizedData[0].LocationId));
             const firstEd = (normalizedData[0].editionlocation || [])[0]?.edition?.[0];
-            const defaultCityId = firstEd?.EditionId ?? "";
+            const defaultCityId = firstEd?.EditionCode || firstEd?.EditionId || "";
             const defaultCitySlug = firstEd?.EditionName || firstEd?.editionName || "delhi";
             setHindustanCity(String(defaultCityId));
             setHindustanCitySlug(String(defaultCitySlug).toLowerCase().trim().replace(/\s+/g, "-"));
@@ -278,7 +279,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
       const stateData = hindustanStates.find((s) => String(s.LocationId) === hindustanState);
       const editionsList = (stateData?.editionlocation || []).flatMap((el) => el?.edition || []);
       if (editionsList.length > 0) {
-        const defaultEditionId = editionsList[0].EditionId ?? "";
+        const defaultEditionId = editionsList[0].EditionCode || editionsList[0].EditionId || "";
         const defaultEditionSlug = editionsList[0].EditionName || editionsList[0].editionName || "delhi";
         setHindustanCity(String(defaultEditionId));
         setHindustanCitySlug(String(defaultEditionSlug).toLowerCase().trim().replace(/\s+/g, "-"));
@@ -506,7 +507,9 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
                 onValueChange={(value) => {
                   const stateData = hindustanStates.find((s) => String(s.LocationId) === hindustanState);
                   const editionsList = (stateData?.editionlocation || []).flatMap((el) => el?.edition || []);
-                  const selectedEdition = editionsList.find((edition) => String(edition.EditionId) === value);
+                  const selectedEdition = editionsList.find(
+                    (edition) => String(edition.EditionCode || edition.EditionId) === value
+                  );
 
                   setHindustanCity(value);
                   if (selectedEdition) {
@@ -525,7 +528,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
                     ?.editionlocation || [])
                     .flatMap((el) => el?.edition || [])
                     .map((edition) => (
-                      <SelectItem key={edition.EditionId} value={String(edition.EditionId)} className="text-slate-200 focus:bg-white/10 hover:bg-white/5 focus:text-slate-100 py-2.5 cursor-pointer">
+                      <SelectItem key={edition.EditionId} value={String(edition.EditionCode || edition.EditionId)} className="text-slate-200 focus:bg-white/10 hover:bg-white/5 focus:text-slate-100 py-2.5 cursor-pointer">
                         {edition.EditionDisplayName}
                       </SelectItem>
                     ))}
