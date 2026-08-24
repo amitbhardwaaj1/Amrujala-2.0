@@ -70,11 +70,13 @@ app.get("/api/download/dainik-jagran", async (req, res) => {
 // 3. Hindustan Times Downloader (GET)
 app.get("/api/download/hindustan-times", async (req, res) => {
   try {
-    const { editionId, editionDate } = req.query;
-    if (!editionId || !editionDate) {
-      return res.status(400).json({ error: "Missing editionId or editionDate" });
+    const { citySlug, editionDate } = req.query;
+    if (!citySlug || !editionDate) {
+      return res.status(400).json({ error: "Missing citySlug or editionDate" });
     }
-    const targetUrl = `https://d1h47qec6ptx2j.cloudfront.net/hindustantimes/v1/download?editionId=${editionId}&editionDate=${editionDate}`;
+    const targetUrl = `https://d1h47qec6ptx2j.cloudfront.net/hindustantimes/v2/download?citySlug=${encodeURIComponent(
+      citySlug as string
+    )}&editionDate=${encodeURIComponent(editionDate as string)}`;
     
     const response = await fetch(targetUrl, {
       method: "GET",

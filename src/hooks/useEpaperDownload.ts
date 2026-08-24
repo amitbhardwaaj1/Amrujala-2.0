@@ -180,12 +180,11 @@ export function useEpaperDownload() {
           }
           setState((s) => ({ ...s, progress: totalPage, totalPages: totalPage }));
         } else if (newspaper === "hindustan-times") {
-          // Hindustan Times - GET, single response with formatted date
-          const formattedDate = `${day}/${month}/${year}`;
-          const editionId = subCity || city;
+          // Hindustan Times - GET, single response with city slug and ISO date
+          const formattedDate = `${year}-${month}-${day}`;
 
           const response = await fetch(
-            `${API_ENDPOINTS["hindustan-times"]}?editionId=${editionId}&editionDate=${formattedDate}`,
+            `${API_ENDPOINTS["hindustan-times"]}?citySlug=${encodeURIComponent(city)}&editionDate=${encodeURIComponent(formattedDate)}`,
             { method: "GET", headers: { "Content-Type": "application/json" } }
           );
           const data = await response.json();

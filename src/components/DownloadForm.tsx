@@ -47,6 +47,8 @@ interface DownloadFormProps {
   isLoading: boolean;
 }
 
+const toCitySlug = (value: string) => value.toLowerCase().trim().replace(/\s+/g, "-");
+
 export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
   const { currentPaper } = useNewspaper();
 
@@ -110,7 +112,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
           setHtEditions(data || []);
 
           if (data && data.length > 0) {
-            setHtCity(String(data[0].EditionId));
+            setHtCity(toCitySlug(String(data[0].EditionName)));
             if (data[0].Supplement && data[0].Supplement.length > 0) {
               setHtSubCity(String(data[0].Supplement[0].EditionId));
             }
@@ -263,7 +265,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
 
   // Update HT sub-cities when city changes
   const htSubCities = useMemo(() => {
-    const edition = htEditions.find((e) => String(e.EditionId) === htCity);
+    const edition = htEditions.find((e) => toCitySlug(String(e.EditionName)) === htCity);
     return edition?.Supplement || [];
   }, [htEditions, htCity]);
 
@@ -306,7 +308,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
     } else if (currentPaper.id === "dainik-jagran") {
       onDownload(currentPaper.id, jagranCity, date, undefined, jagranState);
     } else if (currentPaper.id === "hindustan-times") {
-      onDownload(currentPaper.id, htCity, date, undefined, undefined, htSubCity);
+      onDownload(currentPaper.id, htCity, date);
     } else if (currentPaper.id === "times-of-india") {
       onDownload(currentPaper.id, toiCity, date);
     } else if (currentPaper.id === "hindustan") {
@@ -422,7 +424,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
                 </SelectTrigger>
                 <SelectContent className="bg-slate-950 border border-slate-800 text-slate-100 max-h-64 shadow-2xl">
                   {htEditions.map((ed) => (
-                    <SelectItem key={ed.EditionId} value={String(ed.EditionId)} className="text-slate-200 focus:bg-white/10 hover:bg-white/5 focus:text-slate-100 py-2.5 cursor-pointer">
+                    <SelectItem key={ed.EditionId} value={toCitySlug(String(ed.EditionName))} className="text-slate-200 focus:bg-white/10 hover:bg-white/5 focus:text-slate-100 py-2.5 cursor-pointer">
                       {ed.EditionName}
                     </SelectItem>
                   ))}
