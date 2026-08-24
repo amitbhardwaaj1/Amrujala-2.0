@@ -179,34 +179,6 @@ export function useEpaperDownload() {
             throw new Error("No data returned from the API.");
           }
           setState((s) => ({ ...s, progress: totalPage, totalPages: totalPage }));
-        } else if (newspaper === "hindustan-times") {
-          // Hindustan Times - GET, single response with city slug and ISO date
-          const formattedDate = `${year}-${month}-${day}`;
-
-          const response = await fetch(
-            `${API_ENDPOINTS["hindustan-times"]}?citySlug=${encodeURIComponent(city)}&editionDate=${encodeURIComponent(formattedDate)}`,
-            { method: "GET", headers: { "Content-Type": "application/json" } }
-          );
-          const data = await response.json();
-
-          if (data?.data?.htmlContent) {
-            const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = data.data.htmlContent;
-            const pageImages = tempDiv.querySelectorAll("img");
-
-            if (pageImages.length > 0) {
-              pageImages.forEach((img, idx) => {
-                images.push(`<img src="${img.src}" alt="Page ${idx + 1}" style="width:100%;" />`);
-              });
-              totalPage = images.length;
-            } else {
-              images.push(data.data.htmlContent);
-              totalPage = 1;
-            }
-          } else {
-            throw new Error("No data returned from the API.");
-          }
-          setState((s) => ({ ...s, progress: totalPage, totalPages: totalPage }));
         } else if (newspaper === "times-of-india") {
           // Times of India - GET with pagination
           const firstData = await fetchWithRetry(
@@ -260,7 +232,7 @@ export function useEpaperDownload() {
           // Hindustan - GET a signed PDF download URL
           const formattedDate = `${day}/${month}/${year}`;
           const response = await fetch(
-            `${API_ENDPOINTS["hindustan"]}?editionId=${encodeURIComponent(city)}&editionDate=${encodeURIComponent(formattedDate)}`,
+            `${API_ENDPOINTS["hindustan"]}?editionid=${encodeURIComponent(city)}&editiondate=${encodeURIComponent(formattedDate)}`,
             { method: "GET", headers: { "Content-Type": "application/json" } }
           );
           if (!response.ok) {

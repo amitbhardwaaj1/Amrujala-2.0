@@ -67,36 +67,7 @@ app.get("/api/download/dainik-jagran", async (req, res) => {
   }
 });
 
-// 3. Hindustan Times Downloader (GET)
-app.get("/api/download/hindustan-times", async (req, res) => {
-  try {
-    const { citySlug, editionDate } = req.query;
-    if (!citySlug || !editionDate) {
-      return res.status(400).json({ error: "Missing citySlug or editionDate" });
-    }
-    const targetUrl = `https://d1h47qec6ptx2j.cloudfront.net/hindustantimes/v2/download?citySlug=${encodeURIComponent(
-      citySlug as string
-    )}&editionDate=${encodeURIComponent(editionDate as string)}`;
-    
-    const response = await fetch(targetUrl, {
-      method: "GET",
-      headers,
-    });
-    
-    if (!response.ok) {
-      const text = await response.text();
-      return res.status(response.status).json({ error: text || "Failed to download Hindustan Times" });
-    }
-    
-    const data = await response.json();
-    return res.json(data);
-  } catch (error: any) {
-    console.error("Hindustan Times Proxy Error:", error);
-    return res.status(500).json({ error: error.message || "Internal server error" });
-  }
-});
-
-// 4. Times of India Downloader (GET)
+// 3. Times of India Downloader (GET)
 app.get("/api/download/times-of-india", async (req, res) => {
   try {
     const { citySlug, day, month, year, page } = req.query;
@@ -126,14 +97,14 @@ app.get("/api/download/times-of-india", async (req, res) => {
 // 5. Hindustan Downloader (GET)
 app.get("/api/download/hindustan", async (req, res) => {
   try {
-    const { editionId, editionDate } = req.query;
-    if (!editionId || !editionDate) {
-      return res.status(400).json({ error: "Missing editionId or editionDate" });
+    const { editionid, editiondate } = req.query;
+    if (!editionid || !editiondate) {
+      return res.status(400).json({ error: "Missing editionid or editiondate" });
     }
 
     const targetUrl = `https://epaperinhouse.livehindustan.com/be/downloadEditionUrl?editionid=${encodeURIComponent(
-      editionId as string
-    )}&editiondate=${encodeURIComponent(editionDate as string)}`;
+      editionid as string
+    )}&editiondate=${encodeURIComponent(editiondate as string)}`;
 
     const response = await fetch(targetUrl, {
       method: "GET",
@@ -210,34 +181,7 @@ app.get("/api/hindustan-direct/edition/:citySlug", async (req, res) => {
   }
 });
 
-// 6. Hindustan Times Edition Hierarchy (GET)
-app.get("/api/ht/editions", async (req, res) => {
-  try {
-    const { EditionDate } = req.query;
-    if (!EditionDate) {
-      return res.status(400).json({ error: "Missing EditionDate" });
-    }
-    const targetUrl = `https://epaper.hindustantimes.com/Home/GetEditionSupplementHierarchy?EditionDate=${EditionDate}`;
-    
-    const response = await fetch(targetUrl, {
-      method: "GET",
-      headers,
-    });
-    
-    if (!response.ok) {
-      const text = await response.text();
-      return res.status(response.status).json({ error: text || "Failed to fetch HT editions" });
-    }
-    
-    const data = await response.json();
-    return res.json(data);
-  } catch (error: any) {
-    console.error("HT Editions Proxy Error:", error);
-    return res.status(500).json({ error: error.message || "Internal server error" });
-  }
-});
-
-// 7. Hindustan Locations (GET)
+// 6. Hindustan Locations (GET)
 app.get("/api/hindustan/locations", async (req, res) => {
   try {
     const targetUrl = "https://epaperinhouse.livehindustan.com/be/api/v1/locations";

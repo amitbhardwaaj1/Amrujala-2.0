@@ -35,14 +35,6 @@ export function BrandLogo({ id, className = "", isCompact = false }: BrandLogoPr
         </div>
       );
 
-    case "hindustan-times":
-      return (
-        <div className={`flex flex-col justify-center border-l-2 border-[#1380f2] pl-2.5 leading-none py-0.5 ${className}`}>
-          <span className="font-sans font-black text-[11px] md:text-xs tracking-wider text-[#1380f2] uppercase font-extrabold">Hindustan</span>
-          <span className="font-sans font-light text-[9px] md:text-[10px] tracking-widest text-slate-400 uppercase font-medium">Times</span>
-        </div>
-      );
-
     case "times-of-india":
       return (
         <div className={`flex flex-col justify-center border-l-2 border-yellow-500 pl-2.5 leading-none py-0.5 ${className}`}>

@@ -16,13 +16,6 @@
   status = 200
   force = true
 
-# Proxy Hindustan Times download queries
-[[redirects]]
-  from = "/api/download/hindustan-times"
-  to = "https://d1h47qec6ptx2j.cloudfront.net/hindustantimes/v1/download"
-  status = 200
-  force = true
-
 # Proxy Times of India download queries
 [[redirects]]
   from = "/api/download/times-of-india"
@@ -30,17 +23,10 @@
   status = 200
   force = true
 
-# Proxy Hindustan HT Supplement hierarchy
-[[redirects]]
-  from = "/api/ht/editions"
-  to = "https://epaper.hindustantimes.com/Home/GetEditionSupplementHierarchy"
-  status = 200
-  force = true
-
-# Proxy Hindustan download queries to CloudFront
+# Proxy Hindustan download queries to the current API
 [[redirects]]
   from = "/api/download/hindustan"
-  to = "https://d1h47qec6ptx2j.cloudfront.net/hindustan/v1/download"
+  to = "https://epaperinhouse.livehindustan.com/be/downloadEditionUrl"
   status = 200
   force = true
 

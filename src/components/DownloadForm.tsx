@@ -14,12 +14,6 @@ import { getJagranStates, getJagranCitiesByState } from "@/data/jagranCities";
 import { getTOICities } from "@/data/toiCities";
 import { NewspaperId } from "@/data/newspapers";
 
-interface HTEdition {
-  EditionId: number;
-  EditionName: string;
-  Supplement?: { EditionId: number; EditionDisplayName: string }[];
-}
-
 interface HindustanState {
   LocationId: number;
   OrgLocation: string;
@@ -47,8 +41,6 @@ interface DownloadFormProps {
   isLoading: boolean;
 }
 
-const toCitySlug = (value: string) => value.toLowerCase().trim().replace(/\s+/g, "-");
-
 export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
   const { currentPaper } = useNewspaper();
 
@@ -66,12 +58,6 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
   // Times of India state
   const toiCities = useMemo(() => getTOICities(), []);
   const [toiCity, setToiCity] = useState("delhi");
-
-  // Hindustan Times state (dynamic)
-  const [htEditions, setHtEditions] = useState<HTEdition[]>([]);
-  const [htCity, setHtCity] = useState("");
-  const [htSubCity, setHtSubCity] = useState("");
-  const [htLoading, setHtLoading] = useState(false);
 
   // Hindustan state (dynamic with states)
   const [hindustanStates, setHindustanStates] = useState<HindustanState[]>([]);
@@ -92,41 +78,6 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
       setJagranCity(jagranCities[0].slug);
     }
   }, [currentPaper.id, jagranCities, jagranCity]);
-
-  // Fetch HT editions when switching to HT or date changes
-  useEffect(() => {
-    if (currentPaper.id === "hindustan-times") {
-      const fetchHTEditions = async () => {
-        setHtLoading(true);
-        try {
-          const dateObj = new Date(date);
-          const formattedDate = `${String(dateObj.getDate()).padStart(2, "0")}/${String(
-            dateObj.getMonth() + 1
-          ).padStart(2, "0")}/${dateObj.getFullYear()}`;
-
-          const res = await fetch(
-            `/api/ht/editions?EditionDate=${formattedDate}`,
-            { method: "GET", headers: { "Content-Type": "application/json" } }
-          );
-          const data = await res.json();
-          setHtEditions(data || []);
-
-          if (data && data.length > 0) {
-            setHtCity(toCitySlug(String(data[0].EditionName)));
-            if (data[0].Supplement && data[0].Supplement.length > 0) {
-              setHtSubCity(String(data[0].Supplement[0].EditionId));
-            }
-          }
-        } catch (error) {
-          console.error("Failed to fetch HT editions:", error);
-          setHtEditions([]);
-        } finally {
-          setHtLoading(false);
-        }
-      };
-      fetchHTEditions();
-    }
-  }, [currentPaper.id, date]);
 
   // Fetch Hindustan states when switching to Hindustan
   useEffect(() => {
@@ -263,18 +214,6 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
     }
   }, [currentPaper.id]);
 
-  // Update HT sub-cities when city changes
-  const htSubCities = useMemo(() => {
-    const edition = htEditions.find((e) => toCitySlug(String(e.EditionName)) === htCity);
-    return edition?.Supplement || [];
-  }, [htEditions, htCity]);
-
-  useEffect(() => {
-    if (htSubCities.length > 0 && !htSubCities.some((s) => String(s.EditionId) === htSubCity)) {
-      setHtSubCity(String(htSubCities[0].EditionId));
-    }
-  }, [htSubCities, htSubCity]);
-
   // Update Hindustan cities when state changes
   useEffect(() => {
     if (hindustanState && hindustanStates.length > 0) {
@@ -307,8 +246,6 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
       onDownload(currentPaper.id, amarCity, date, paperType);
     } else if (currentPaper.id === "dainik-jagran") {
       onDownload(currentPaper.id, jagranCity, date, undefined, jagranState);
-    } else if (currentPaper.id === "hindustan-times") {
-      onDownload(currentPaper.id, htCity, date);
     } else if (currentPaper.id === "times-of-india") {
       onDownload(currentPaper.id, toiCity, date);
     } else if (currentPaper.id === "hindustan") {
@@ -407,51 +344,6 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
                 </SelectContent>
               </Select>
             </div>
-          </>
-        )}
-
-        {/* Hindustan Times Form */}
-        {currentPaper.id === "hindustan-times" && (
-          <>
-            <div className="space-y-2 mb-5">
-              <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                <MapPin className="w-3.5 h-3.5 text-primary" />
-                Select Edition
-              </label>
-              <Select value={htCity} onValueChange={setHtCity} disabled={htLoading}>
-                <SelectTrigger className="w-full h-12 bg-slate-900 border-slate-700 hover:bg-slate-850 text-slate-100 placeholder-slate-400 focus:ring-primary/20 transition-all font-medium rounded-xl border">
-                  <SelectValue placeholder={htLoading ? "Loading..." : "Choose edition"} />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-950 border border-slate-800 text-slate-100 max-h-64 shadow-2xl">
-                  {htEditions.map((ed) => (
-                    <SelectItem key={ed.EditionId} value={toCitySlug(String(ed.EditionName))} className="text-slate-200 focus:bg-white/10 hover:bg-white/5 focus:text-slate-100 py-2.5 cursor-pointer">
-                      {ed.EditionName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {htSubCities.length > 0 && (
-              <div className="space-y-2 mb-5">
-                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  <FileText className="w-3.5 h-3.5 text-primary" />
-                  Select Supplement
-                </label>
-                <Select value={htSubCity} onValueChange={setHtSubCity}>
-                  <SelectTrigger className="w-full h-12 bg-slate-900 border-slate-700 hover:bg-slate-850 text-slate-100 placeholder-slate-400 focus:ring-primary/20 transition-all font-medium rounded-xl border">
-                    <SelectValue placeholder="Choose supplement" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-950 border border-slate-800 text-slate-100 max-h-64 shadow-2xl">
-                    {htSubCities.map((sub) => (
-                      <SelectItem key={sub.EditionId} value={String(sub.EditionId)} className="text-slate-200 focus:bg-white/10 hover:bg-white/5 focus:text-slate-100 py-2.5 cursor-pointer">
-                        {sub.EditionDisplayName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </>
         )}
 
@@ -558,7 +450,7 @@ export function DownloadForm({ onDownload, isLoading }: DownloadFormProps) {
         {/* Download Button */}
         <Button
           type="submit"
-          disabled={isLoading || !date || (currentPaper.id === "hindustan-times" && htLoading) || (currentPaper.id === "hindustan" && hindustanLoading)}
+            disabled={isLoading || !date || (currentPaper.id === "hindustan" && hindustanLoading)}
           className="w-full h-14 text-base font-bold rounded-xl bg-primary hover:scale-[1.01] hover:brightness-110 active:scale-[0.98] text-primary-foreground glow-primary transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2 border border-primary/20 cursor-pointer shadow-lg shadow-primary/20"
         >
           {isLoading ? (

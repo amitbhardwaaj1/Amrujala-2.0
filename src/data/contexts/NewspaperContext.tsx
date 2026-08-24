@@ -24,7 +24,6 @@ export function NewspaperProvider({ children }: { children: ReactNode }) {
     const rgbMap: Record<NewspaperId, string> = {
       "amar-ujala": "255, 96, 61",
       "dainik-jagran": "238, 43, 43",
-      "hindustan-times": "13, 128, 242",
       "times-of-india": "234, 179, 8", // Amber accent color
       "hindustan": "0, 183, 255",
     };
